@@ -355,7 +355,7 @@ document.addEventListener('click',e=>{
   const b=e.target.closest('[data-act]');if(!b)return;const a=b.dataset.act,t=S.taslak,id=b.dataset.id&&(isNaN(+b.dataset.id)?b.dataset.id:+b.dataset.id);
   if(a==='sbg'){if(e.target===b){S.sheet=null;sheet()}return}
   if(a==='secbg'){if(e.target===b){S.sec=null;secici()}return}
-  if(a==='tab'){S.tab=b.dataset.tab;S.more=100;S.sayim=null;S.sevkOnay=null;if(S.kat==='__girilen')S.kat='';ciz();window.scrollTo(0,0);if(S.tab==='yonetim')personelYukle();else tazele()}
+  if(a==='tab'){S.tab=b.dataset.tab;S.more=100;S.sayim=null;S.sevkOnay=null;if(S.kat==='__girilen')S.kat='';ciz();$('#kaydir').scrollTop=0;if(S.tab==='yonetim')personelYukle();else tazele()}
   else if(a==='kurulum'){const ad=$('#k-ad').value.trim(),ep=$('#k-eposta').value.trim(),s1=$('#k-sifre').value,s2=$('#k-sifre2').value;
     if(!ad||!ep.includes('@')){toast('Adınızı ve e-posta adresinizi yazın.',1);return}if(s1.length<8){toast('Şifre en az 8 karakter olmalı.',1);return}if(s1!==s2){toast('İki şifre aynı değil.',1);return}
     is(async()=>{await hesap({islem:'ilk_kurulum',ad,eposta:ep,sifre:s1});const{error}=await sb.auth.signInWithPassword({email:ep.toLowerCase(),password:s1});if(error)throw error;S.not='';if(await profilYukle()){S.ekran='ana';tazele()}else S.ekran='giris'})}
