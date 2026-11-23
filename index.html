@@ -1,0 +1,245 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="theme-color" content="#2b2e31">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="Karabacak Stok">
+<title>Karabacak Stok</title>
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="icon" href="icon.svg" type="image/svg+xml">
+<link rel="apple-touch-icon" href="icon.svg">
+<style>
+:root{
+  --bg:#f2f2f0; --surface:#ffffff; --ink:#1f2224; --muted:#666c72; --line:#d9d9d5; --dark:#2b2e31; --dark-ink:#ffffff;
+  --accent:#c4302b; --accent-ink:#ffffff; --soft:#e9e9e6;
+  --ok:#1c7a4c; --ok-bg:#e2f3ea; --warn:#96590a; --warn-bg:#fdf0cf; --bad:#b3261e; --bad-bg:#fbe4e2;
+  --font:"Segoe UI",Roboto,"Helvetica Neue",Arial,sans-serif;
+}
+*{box-sizing:border-box}
+html,body{margin:0;height:100%}
+body{background:var(--bg);color:var(--ink);font:400 16px/1.45 var(--font);font-variant-numeric:tabular-nums}
+button,input,select{font:inherit;color:inherit}
+button{cursor:pointer}
+:focus-visible{outline:3px solid var(--accent);outline-offset:2px}
+.wrap{max-width:760px;margin:0 auto;padding:0 16px}
+header.top{background:var(--dark);color:var(--dark-ink)}
+header.top .wrap{display:flex;align-items:center;gap:10px;padding-top:12px;padding-bottom:12px}
+.mark{width:28px;height:28px;flex:none}
+h1{font-size:18px;font-weight:700;letter-spacing:.04em;text-transform:uppercase;margin:0;flex:1}
+.who{font-size:13px;opacity:.85;text-align:right}
+main{padding-top:16px;padding-bottom:96px;display:flex;flex-direction:column;gap:14px}
+h2{font-size:20px;font-weight:700;margin:0}
+h3{font-size:14px;font-weight:600;margin:0;color:var(--muted)}
+.card{background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:14px}
+.row{display:flex;gap:10px;align-items:center;flex-wrap:wrap}
+.grow{flex:1;min-width:0}
+.muted{color:var(--muted)} .small{font-size:13px}
+.btn{min-height:48px;padding:0 18px;border-radius:8px;border:1px solid var(--line);background:var(--surface);color:var(--ink);font-weight:600}
+.btn.pri{background:var(--accent);border-color:var(--accent);color:var(--accent-ink)}
+.btn.dark{background:var(--dark);border-color:var(--dark);color:var(--dark-ink)}
+.btn.block{width:100%}
+.btn:disabled{opacity:.45;cursor:not-allowed}
+.link{background:none;border:0;padding:8px 0;color:var(--accent);font-weight:600;text-decoration:underline;min-height:44px}
+.field{display:flex;flex-direction:column;gap:4px;font-size:13px;color:var(--muted)}
+.field input,.field select,.inp{min-height:48px;border:1px solid var(--line);border-radius:8px;background:var(--surface);color:var(--ink);padding:0 12px;font-size:16px;width:100%}
+.inp.num{width:104px;text-align:right;font-weight:600}
+.form{display:flex;flex-direction:column;gap:12px}
+.chips{display:flex;gap:6px;overflow-x:auto;padding-bottom:4px}
+.chips button{flex:none;min-height:38px;padding:0 12px;border-radius:999px;border:1px solid var(--line);background:var(--surface);font-size:14px}
+.chips button[aria-pressed="true"]{background:var(--dark);color:var(--dark-ink);border-color:var(--dark)}
+.chip{display:inline-flex;align-items:center;font-size:12px;font-weight:600;padding:2px 8px;border-radius:999px;background:var(--soft);color:var(--muted);white-space:nowrap}
+.chip.ok{background:var(--ok-bg);color:var(--ok)} .chip.warn{background:var(--warn-bg);color:var(--warn)} .chip.bad{background:var(--bad-bg);color:var(--bad)}
+.note{border-radius:8px;padding:10px 12px;font-size:14px;background:var(--soft)}
+.note.warn{background:var(--warn-bg);color:var(--warn)} .note.bad{background:var(--bad-bg);color:var(--bad)}
+.list{display:flex;flex-direction:column}
+.item{display:flex;gap:10px;align-items:center;padding:10px 0;border-top:1px solid var(--line);min-height:52px}
+.item:first-child{border-top:0}
+.item .nm{font-weight:600;overflow-wrap:anywhere}
+.qty{text-align:right;white-space:nowrap;font-weight:700;font-size:20px;line-height:1.1}
+.qty small{font-weight:500;font-size:12px;color:var(--muted);margin-left:3px}
+.qty.neg{color:var(--bad)}
+.bar{position:sticky;bottom:76px;background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:10px;display:flex;gap:10px;align-items:center;box-shadow:0 4px 16px rgba(0,0,0,.14)}
+nav.tabs{position:fixed;left:0;right:0;bottom:0;background:var(--surface);border-top:1px solid var(--line);z-index:5}
+nav.tabs .wrap{display:flex;padding:4px 16px calc(4px + env(safe-area-inset-bottom))}
+nav.tabs button{flex:1;border:0;background:none;min-height:60px;font-weight:700;font-size:15px;color:var(--muted);border-top:3px solid transparent}
+nav.tabs button[aria-current="page"]{color:var(--accent);border-top-color:var(--accent)}
+.center{max-width:420px;margin:32px auto 0}
+.sheet-bg{position:fixed;inset:0;background:rgba(0,0,0,.45);z-index:10;display:flex;align-items:flex-end;justify-content:center}
+.sheet{background:var(--surface);width:100%;max-width:760px;max-height:88%;overflow:auto;border-radius:14px 14px 0 0;padding:16px 16px 28px;display:flex;flex-direction:column;gap:12px}
+.x{border:0;background:none;font-size:24px;line-height:1;min-width:44px;min-height:44px;color:var(--muted)}
+.toast{position:fixed;left:50%;transform:translateX(-50%);bottom:92px;background:var(--dark);color:var(--dark-ink);padding:10px 16px;border-radius:8px;z-index:20;max-width:90%;font-weight:500}
+.hidden{display:none}
+</style>
+</head>
+<body>
+<header class="top"><div class="wrap">
+  <svg class="mark" viewBox="0 0 30 30" aria-hidden="true"><path d="M3 17 15 6l12 11v-5L15 1 3 12z" fill="#e2524b"/><path d="M3 27 15 16l12 11v-5L15 11 3 22z" fill="#e2524b"/></svg>
+  <h1>Karabacak Stok</h1><div class="who" id="who"></div>
+</div></header>
+<div class="wrap"><main id="app"><p class="muted">Yükleniyor…</p></main></div>
+<nav class="tabs hidden" id="tabs" aria-label="Bölümler"><div class="wrap" id="tabbar"></div></nav>
+<div id="sheet"></div><div id="toast"></div>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.min.js"></script>
+<script>
+const AYAR={url:'https://hftnnrbonjkdwachrzbw.supabase.co',anahtar:'sb_publishable_vplklqs61viozIeqBOSoDg_HxCQQOxt',alan:'stok.karabacakmetal.com'};
+const $=s=>document.querySelector(s);
+const esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const fmt=n=>(n==null||isNaN(n))?'0':(Math.round(n*1000)/1000).toLocaleString('tr-TR',{maximumFractionDigits:3});
+const num=s=>{const t=String(s??'').replace(/\s/g,'');if(!t)return NaN;return t.includes(',')?parseFloat(t.replace(/\./g,'').replace(',','.')):parseFloat(t)};
+const sade=s=>String(s||'').toLocaleLowerCase('tr').replace(/ı/g,'i').replace(/ç/g,'c').replace(/ğ/g,'g').replace(/ö/g,'o').replace(/ş/g,'s').replace(/ü/g,'u');
+const norm=s=>sade(s).replace(/,/g,'.').replace(/[×*]/g,'x').replace(/[^a-z0-9.\/]+/g,' ').replace(/\s+/g,' ').trim();
+const kimlik=()=>crypto.randomUUID?crypto.randomUUID():'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g,c=>{const r=Math.random()*16|0;return(c==='x'?r:(r&3|8)).toString(16)});
+const HATA={YETKI_YOK:'Bu işlem için yetkiniz yok.',SAYIM_NEGATIF:'Sayım miktarı eksi olamaz.',SAYIM_REZERVEDEN_AZ:'Sayılan miktar, satılmış ama henüz çıkmamış (rezerve) miktardan az olamaz.',
+  KULLANICI_ADI_KULLANIMDA:'Bu kullanıcı adı kullanılıyor.',BILGI_EKSIK:'Bilgiler eksik ya da şifre çok kısa.',KURULUM_YAPILMIS:'İlk kurulum zaten yapılmış. Giriş yapın.',GIRIS_GEREKLI:'Oturum süresi dolmuş. Yeniden giriş yapın.'};
+const hataMetni=e=>{const m=String((e&&(e.message||e.hata))||e||'');const k=Object.keys(HATA).find(x=>m.includes(x));return k?HATA[k]:(m?'İşlem yapılamadı: '+m:'İşlem yapılamadı. Bağlantıyı kontrol edip yeniden deneyin.')};
+
+const sb=window.supabase.createClient(AYAR.url,AYAR.anahtar);
+const S={ekran:'yukleniyor',tab:'stok',ben:null,oturum:null,urunler:[],yuklendi:false,q:'',kat:'',more:120,sayim:null,personel:[],sheet:null,mesgul:false,not:''};
+
+async function hesap(govde){
+  const jeton=(S.oturum&&S.oturum.access_token)||AYAR.anahtar;
+  const r=await fetch(AYAR.url+'/functions/v1/hesap',{method:'POST',headers:{'Content-Type':'application/json',apikey:AYAR.anahtar,Authorization:'Bearer '+jeton},body:JSON.stringify(govde)});
+  const j=await r.json().catch(()=>({hata:'SUNUCU_YANITI_OKUNAMADI'}));
+  if(!r.ok||j.hata)throw new Error(j.hata||('HTTP '+r.status));
+  return j;
+}
+async function profilYukle(){
+  const{data:{session}}=await sb.auth.getSession();S.oturum=session;
+  if(!session){S.ben=null;return false}
+  const{data,error}=await sb.from('kullanici').select('id,ad,rol,aktif,kullanici_adi').eq('id',session.user.id).maybeSingle();
+  if(error||!data||!data.aktif){await sb.auth.signOut();S.ben=null;S.oturum=null;S.not='Hesabınız etkin değil. Yöneticiye başvurun.';return false}
+  S.ben=data;return true;
+}
+async function stokYukle(){
+  const hepsi=[];
+  for(let i=0;i<5;i++){
+    const{data,error}=await sb.from('stok_gorunum').select('*').order('urun_id').range(i*1000,i*1000+999);
+    if(error){if(!S.yuklendi){S.not='Stok listesi alınamadı. Bağlantıyı kontrol edin.';}return}
+    hepsi.push(...data);if(data.length<1000)break;
+  }
+  hepsi.forEach(u=>u.n=norm(u.ad));
+  S.urunler=hepsi;S.yuklendi=true;S.not='';yumusak();
+}
+async function personelYukle(){const{data}=await sb.from('kullanici').select('id,ad,rol,aktif,kullanici_adi').order('ad');S.personel=data||[];yumusak()}
+
+async function basla(){
+  try{
+    if(await profilYukle()){S.ekran='ana';ciz();stokYukle();return}
+    const d=await hesap({islem:'durum'}).catch(()=>({kurulum_gerekli:false}));
+    S.ekran=d.kurulum_gerekli?'kurulum':'giris';
+  }catch(e){S.ekran='giris';S.not='Sunucuya ulaşılamadı. Bağlantıyı kontrol edin.'}
+  ciz();
+}
+
+/* ---------- görünümler ---------- */
+function vKurulum(){return`<div class="center card form"><h2>İlk kurulum</h2><p class="small muted" style="margin:0">Yönetici hesabını bir kez oluşturun. Personel hesaplarını sonra Yönetim bölümünden açarsınız.</p>
+  ${S.not?`<div class="note bad">${esc(S.not)}</div>`:''}
+  <label class="field">Adınız<input id="k-ad" autocomplete="name"></label>
+  <label class="field">E-posta<input id="k-eposta" type="email" autocomplete="email" value="murat@karabacakmetal.com"></label>
+  <label class="field">Şifre (en az 8 karakter)<input id="k-sifre" type="password" autocomplete="new-password"></label>
+  <label class="field">Şifre (tekrar)<input id="k-sifre2" type="password" autocomplete="new-password"></label>
+  <button type="button" class="btn pri block" data-act="kurulum" ${S.mesgul?'disabled':''}>${S.mesgul?'Oluşturuluyor…':'Yönetici hesabını oluştur'}</button></div>`}
+function vGiris(){return`<div class="center card form"><h2>Giriş</h2>
+  ${S.not?`<div class="note bad">${esc(S.not)}</div>`:''}
+  <label class="field">Kullanıcı adı ya da e-posta<input id="g-kim" autocomplete="username" autocapitalize="none" spellcheck="false"></label>
+  <label class="field">Şifre<input id="g-sifre" type="password" autocomplete="current-password"></label>
+  <button type="button" class="btn pri block" data-act="giris" ${S.mesgul?'disabled':''}>${S.mesgul?'Giriş yapılıyor…':'Giriş yap'}</button></div>`}
+function ara(){
+  const ts=norm(S.q).split(' ').filter(Boolean);
+  let ps=S.urunler.filter(u=>u.aktif&&(S.kat==='__kritik'?u.kritik:S.kat==='__eksi'?u.kullanilabilir<0:(!S.kat||u.kategori===S.kat))&&ts.every(t=>u.n.includes(t)));
+  if(ts.length)ps.sort((a,b)=>(b.n.startsWith(ts[0])-a.n.startsWith(ts[0]))||a.n.length-b.n.length);
+  return ps;
+}
+function satirlar(){
+  const ps=ara(),tot=ps.length;
+  return ps.slice(0,S.more).map(u=>{const b=u.birim_kod.toLocaleLowerCase('tr');
+    if(S.sayim)return`<div class="item"><div class="grow"><div class="nm">${esc(u.ad)}</div><div class="small muted">${esc(u.kategori)} · kayıtlı ${fmt(u.fiziksel)} ${b}${+u.rezerve?' · rezerve '+fmt(u.rezerve):''}</div></div><input class="inp num" inputmode="decimal" aria-label="${esc(u.ad)} sayım miktarı" data-in="say" data-id="${u.urun_id}" value="${esc(S.sayim[u.urun_id]||'')}" placeholder="${b}"></div>`;
+    return`<div class="item"><div class="grow"><div class="nm">${esc(u.ad)} ${u.kritik?'<span class="chip warn">kritik</span>':''}</div><div class="small muted">${esc(u.kategori)} · depoda ${fmt(u.fiziksel)} · rezerve ${fmt(u.rezerve)}</div></div><div class="qty ${u.kullanilabilir<0?'neg':''}">${fmt(u.kullanilabilir)}<small>${b}</small></div></div>`}).join('')
+    +(tot>S.more?`<button type="button" class="btn block" style="margin-top:10px" data-act="more">${tot-S.more} ürün daha göster</button>`:'')
+    +(tot?'':`<p class="muted small" style="margin:8px 0">${S.yuklendi?'Aramaya uyan ürün yok.':'Stok listesi yükleniyor…'}</p>`);
+}
+function sayBar(){const n=Object.values(S.sayim||{}).filter(v=>!isNaN(num(v))).length;return`<div class="grow small muted">${n?n+' ürün için miktar girildi.':'Raftaki gerçek miktarları yazın.'}</div><button type="button" class="btn pri" data-act="saykaydet" ${n&&!S.mesgul?'':'disabled'}>${S.mesgul?'Kaydediliyor…':'Sayımı kaydet'}</button>`}
+function vStok(){
+  const kats=[...new Set(S.urunler.map(u=>u.kategori))];
+  return`<div class="row"><h2 class="grow">Stok</h2>${S.ben.rol==='yonetici'?`<button type="button" class="btn ${S.sayim?'dark':''}" data-act="saymod">${S.sayim?'Sayımdan çık':'Sayım yap'}</button>`:''}</div>
+  ${S.not?`<div class="note warn">${esc(S.not)}</div>`:''}
+  ${S.sayim?'<div class="note">Her ürünün yanına raftaki gerçek miktarı yazın. Boş bıraktıklarınız değişmez.</div>':'<div class="small muted">Büyük rakam satılabilir (kullanılabilir) stoktur: depodaki miktardan rezerve düşülür.</div>'}
+  <input class="inp" id="q" type="search" placeholder="Ürün ara: 20x40, menteşe, lama…" aria-label="Ürün ara" data-in="q" value="${esc(S.q)}">
+  <div class="chips">${[['','Tümü'],...kats.map(k=>[k,k]),['__kritik','Kritik stok'],['__eksi','Eksiye düşen']].map(([k,l])=>`<button type="button" data-act="kat" data-kat="${esc(k)}" aria-pressed="${S.kat===k}">${esc(l)}</button>`).join('')}</div>
+  <div class="card"><div class="list" id="rows">${satirlar()}</div></div>
+  ${S.sayim?`<div class="bar" id="saybar">${sayBar()}</div>`:''}`;
+}
+const ROL={yonetici:'Yönetici',satis:'Satış',depo:'Depo'};
+function vYonetim(){
+  return`<h2>Personel</h2>
+  <div class="card"><div class="list">${S.personel.map(p=>`<div class="item"><div class="grow"><div class="nm">${esc(p.ad)} <span class="chip">${ROL[p.rol]||p.rol}</span> ${p.aktif?'':'<span class="chip bad">pasif</span>'}</div><div class="small muted">${p.kullanici_adi?'Kullanıcı adı: '+esc(p.kullanici_adi):'E-posta ile giriş'}</div></div>
+    ${p.id===S.ben.id?'':`<button type="button" class="btn" data-act="pduz" data-id="${p.id}">Düzenle</button>`}</div>`).join('')||'<p class="muted small" style="margin:0">Yükleniyor…</p>'}</div></div>
+  <div class="card form"><h3>Yeni personel</h3>
+    <label class="field">Ad<input id="p-ad" autocomplete="off"></label>
+    <label class="field">Kullanıcı adı (küçük harf, boşluksuz)<input id="p-kadi" autocapitalize="none" autocomplete="off" spellcheck="false"></label>
+    <label class="field">Geçici şifre (en az 6 karakter)<input id="p-sifre" autocomplete="off"></label>
+    <button type="button" class="btn pri block" data-act="pekle" ${S.mesgul?'disabled':''}>${S.mesgul?'Açılıyor…':'Personel hesabı aç'}</button></div>`;
+}
+function vHesabim(){return`<h2>Hesabım</h2><div class="card"><div class="nm" style="font-weight:600">${esc(S.ben.ad)}</div><div class="small muted">${ROL[S.ben.rol]}${S.ben.kullanici_adi?' · kullanıcı adı: '+esc(S.ben.kullanici_adi):''}</div></div>
+  <div class="card form"><h3>Şifre değiştir</h3><label class="field">Yeni şifre (en az 6 karakter)<input id="h-sifre" type="password" autocomplete="new-password"></label><button type="button" class="btn block" data-act="sifrem">Şifreyi değiştir</button></div>
+  <button type="button" class="btn block" data-act="cikis">Çıkış yap</button>`}
+function ciz(){
+  const ana=S.ekran==='ana';
+  $('#who').textContent=ana&&S.ben?S.ben.ad:'';
+  $('#tabs').classList.toggle('hidden',!ana);
+  if(ana){const tl=[['stok','Stok'],...(S.ben.rol==='yonetici'?[['yonetim','Yönetim']]:[]),['hesabim','Hesabım']];
+    $('#tabbar').innerHTML=tl.map(([k,l])=>`<button type="button" data-act="tab" data-tab="${k}" ${S.tab===k?'aria-current="page"':''}>${l}</button>`).join('')}
+  $('#app').innerHTML=S.ekran==='yukleniyor'?'<p class="muted">Yükleniyor…</p>':S.ekran==='kurulum'?vKurulum():S.ekran==='giris'?vGiris():S.tab==='yonetim'?vYonetim():S.tab==='hesabim'?vHesabim():vStok();
+}
+function yumusak(){const a=document.activeElement;if(a&&/^(INPUT|SELECT)$/.test(a.tagName))return;if(S.sheet)return;ciz()}
+let tt;function toast(m){$('#toast').innerHTML=`<div class="toast" role="status">${esc(m)}</div>`;clearTimeout(tt);tt=setTimeout(()=>$('#toast').innerHTML='',4500)}
+function sheet(){
+  const s=S.sheet,el=$('#sheet');if(!s){el.innerHTML='';return}
+  const p=S.personel.find(x=>x.id===s.id);if(!p){S.sheet=null;el.innerHTML='';return}
+  el.innerHTML=`<div class="sheet-bg" data-act="sbg"><div class="sheet" role="dialog" aria-modal="true">
+    <div class="row"><h2 class="grow">${esc(p.ad)}</h2><button type="button" class="x" data-act="skapat" aria-label="Kapat">×</button></div>
+    <label class="field">Yeni şifre (en az 6 karakter)<input id="s-sifre" autocomplete="off"></label>
+    <button type="button" class="btn block" data-act="psifre">Şifreyi değiştir</button>
+    <button type="button" class="btn block" data-act="paktif">${p.aktif?'Hesabı pasife al (giriş yapamaz)':'Hesabı yeniden etkinleştir'}</button></div></div>`;
+}
+
+/* ---------- olaylar ---------- */
+async function is(f){if(S.mesgul)return;S.mesgul=true;ciz();try{await f()}catch(e){toast(hataMetni(e))}finally{S.mesgul=false;ciz();if(S.sheet)sheet()}}
+document.addEventListener('click',e=>{
+  const b=e.target.closest('[data-act]');if(!b)return;const a=b.dataset.act;
+  if(a==='sbg'){if(e.target===b){S.sheet=null;sheet()}return}
+  if(a==='tab'){S.tab=b.dataset.tab;S.more=120;S.sayim=null;ciz();window.scrollTo(0,0);if(S.tab==='yonetim')personelYukle();if(S.tab==='stok')stokYukle()}
+  else if(a==='kurulum'){const ad=$('#k-ad').value.trim(),ep=$('#k-eposta').value.trim(),s1=$('#k-sifre').value,s2=$('#k-sifre2').value;
+    if(!ad||!ep.includes('@')){toast('Adınızı ve e-posta adresinizi yazın.');return}if(s1.length<8){toast('Şifre en az 8 karakter olmalı.');return}if(s1!==s2){toast('İki şifre aynı değil.');return}
+    is(async()=>{await hesap({islem:'ilk_kurulum',ad,eposta:ep,sifre:s1});const{error}=await sb.auth.signInWithPassword({email:ep.toLowerCase(),password:s1});if(error)throw error;S.not='';if(await profilYukle()){S.ekran='ana';stokYukle()}else S.ekran='giris'})}
+  else if(a==='giris'){let kim=$('#g-kim').value.trim();const sifre=$('#g-sifre').value;if(!kim||!sifre){toast('Kullanıcı adı ve şifreyi yazın.');return}
+    const email=kim.includes('@')?kim.toLowerCase():sade(kim).replace(/[^a-z0-9._-]/g,'')+'@'+AYAR.alan;
+    is(async()=>{const{error}=await sb.auth.signInWithPassword({email,password:sifre});if(error){S.not='Kullanıcı adı ya da şifre hatalı.';return}S.not='';if(await profilYukle()){S.ekran='ana';S.tab='stok';stokYukle()}})}
+  else if(a==='cikis'){is(async()=>{await sb.auth.signOut();S.ben=null;S.oturum=null;S.urunler=[];S.yuklendi=false;S.ekran='giris'})}
+  else if(a==='sifrem'){const s=$('#h-sifre').value;if(s.length<6){toast('Şifre en az 6 karakter olmalı.');return}is(async()=>{const{error}=await sb.auth.updateUser({password:s});if(error)throw error;toast('Şifreniz değişti.')})}
+  else if(a==='kat'){S.kat=b.dataset.kat;S.more=120;ciz()}
+  else if(a==='more'){S.more+=300;$('#rows').innerHTML=satirlar()}
+  else if(a==='saymod'){S.sayim=S.sayim?null:{};ciz()}
+  else if(a==='saykaydet'){const st=[];for(const[id,v]of Object.entries(S.sayim)){const c=num(v);if(isNaN(c))continue;if(c<0){toast('Sayım miktarı eksi olamaz.');return}st.push({urun_id:+id,sayilan:c})}
+    if(!st.length)return;is(async()=>{const{error}=await sb.rpc('sayim_onayla',{p_satirlar:st,p_aciklama:'Sayım',p_islem:kimlik()});if(error)throw error;S.sayim=null;toast(st.length+' ürünün sayımı kaydedildi.');await stokYukle()})}
+  else if(a==='pekle'){const ad=$('#p-ad').value.trim(),kadi=sade($('#p-kadi').value.trim()),sifre=$('#p-sifre').value;
+    if(!ad||!/^[a-z0-9._-]{3,30}$/.test(kadi)){toast('Ad ve kullanıcı adı gerekli. Kullanıcı adı en az 3 harf, boşluksuz olmalı.');return}if(sifre.length<6){toast('Şifre en az 6 karakter olmalı.');return}
+    is(async()=>{await hesap({islem:'personel_ekle',ad,kullanici_adi:kadi,sifre,rol:'satis'});toast(ad+' için hesap açıldı. Kullanıcı adı: '+kadi);await personelYukle()})}
+  else if(a==='pduz'){S.sheet={id:b.dataset.id};sheet()}
+  else if(a==='skapat'){S.sheet=null;sheet()}
+  else if(a==='psifre'){const s=$('#s-sifre').value;if(s.length<6){toast('Şifre en az 6 karakter olmalı.');return}const id=S.sheet.id;is(async()=>{await hesap({islem:'sifre_degistir',id,sifre:s});S.sheet=null;toast('Şifre değişti.')})}
+  else if(a==='paktif'){const p=S.personel.find(x=>x.id===S.sheet.id);is(async()=>{const{error}=await sb.from('kullanici').update({aktif:!p.aktif}).eq('id',p.id);if(error)throw error;S.sheet=null;await personelYukle()})}
+});
+document.addEventListener('input',e=>{const t=e.target,k=t.dataset.in;if(!k)return;
+  if(k==='q'){S.q=t.value;S.more=120;$('#rows').innerHTML=satirlar()}
+  else if(k==='say'){S.sayim[t.dataset.id]=t.value;const sb2=$('#saybar');if(sb2)sb2.innerHTML=sayBar()}});
+document.addEventListener('keydown',e=>{if(e.key==='Enter'&&e.target.matches('#g-sifre,#g-kim'))$('[data-act="giris"]').click();if(e.key==='Escape'&&S.sheet){S.sheet=null;sheet()}});
+document.addEventListener('visibilitychange',()=>{if(!document.hidden&&S.ekran==='ana'&&!S.sayim)stokYukle()});
+setInterval(()=>{if(!document.hidden&&S.ekran==='ana'&&S.tab==='stok'&&!S.sayim)stokYukle()},60000);
+sb.auth.onAuthStateChange((olay,oturum)=>{S.oturum=oturum;if(olay==='SIGNED_OUT'&&S.ekran==='ana'){S.ben=null;S.ekran='giris';ciz()}});
+basla();
+</script>
+</body>
+</html>
