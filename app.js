@@ -57,12 +57,14 @@ async function stokYukle(){
   S.urunler=hepsi;S.U=new Map(hepsi.map(u=>[u.urun_id,u]));S.yuklendi=true;S.not='';yumusak();
 }
 async function anaYukle(){
-  const[b,d,r,c,k]=await Promise.all([
+  const[b,d,r,c,k,ay]=await Promise.all([
     sb.from('belge').select('id,tur,belge_no,tarih,cari_ad,durum,toplam,olusturma,yukleyen').order('olusturma',{ascending:false}).limit(40),
     sb.from('belge_satir').select('id,belge_id,urun_id,miktar,durum').in('durum',['bekliyor','stok_yetersiz','kabul_bekliyor']).limit(500),
     sb.from('rezervasyon').select('*').in('durum',['aktif','kismi']).order('olusturma').limit(1000),
     sb.from('urun_cevrim').select('urun_id,kaynak_birim,oran').eq('dogrulandi',true).limit(2000),
-    sb.from('kullanici').select('id,ad').limit(200)]);
+    sb.from('kullanici').select('id,ad').limit(200),
+    sb.from('ayar').select('anahtar,deger')]);
+  S.eksiIzin=((ay.data||[]).find(x=>x.anahtar==='eksi_satis_izin')||{}).deger===true;
   if(b.error){S.anaNot='Kayıtlar alınamadı. Bağlantıyı kontrol edin.';yumusak();return}
   S.belgeler=b.data||[];S.dikkat=d.data||[];S.rez=(r.data||[]).map(x=>Object.assign(x,{miktar:+x.miktar,kalan:+x.kalan,sevk_edilen:+x.sevk_edilen}));
   S.cevrim={};(c.data||[]).forEach(x=>S.cevrim[x.urun_id+'|'+x.kaynak_birim]=+x.oran);
@@ -189,9 +191,10 @@ function taslakSatir(l,i,tur){
   return`<div class="ln ${d}"><div class="row"><div class="grow small muted" style="overflow-wrap:anywhere">${esc(kaynak)||'Elle eklenen satır'}</div>${chip}<button type="button" class="x" data-act="tsil" data-i="${i}" aria-label="Satırı sil">×</button></div>
     <button type="button" class="prod ${l.urun_id||l.dis?'':'bos'}" data-act="tsec" data-i="${i}"><span>${l.dis?'Stok dışı (nakliye, işçilik vb.)':u?esc(u.ad)+' <span class="muted small">'+esc(u.kategori)+'</span>':'Ürün seçmek için dokunun'}</span><span class="small">Değiştir</span></button>
     ${l.dis?'':`<div class="row"><label class="small muted grow" for="tm${i}">${tur==='satis'?'Satılan miktar':'Gelen miktar'}</label><input class="inp num" id="tm${i}" inputmode="decimal" data-in="tm" data-i="${i}" value="${esc(l.m)}"><span class="small" style="min-width:42px">${u?bl(u):''}</span></div>
-    ${u&&tur==='satis'?`<div class="small muted">Satılabilir stok: ${fmt(u.kullanilabilir)} ${bl(u)}${m>u.kullanilabilir?' <span style="color:var(--bad);font-weight:600">· yetmiyor, yöneticiye düşer</span>':''}</div>`:''}
+    ${u&&tur==='satis'?`<div class="small muted">Satılabilir stok: ${fmt(u.kullanilabilir)} ${bl(u)}${m>u.kullanilabilir?` <span style="color:var(--bad);font-weight:600">· ${S.eksiIzin?'stok eksiye düşecek':'yetmiyor, yöneticiye düşer'}</span>`:''}</div>`:''}
     ${l.not?`<div class="small muted">${esc(l.not)}</div>`:''}${kusur?'<div class="small" style="color:var(--warn)">Küsuratlı miktar. Doğruysa devam edin.</div>':''}
-    <div class="row">${tur==='satis'?`<label class="tog grow"><input type="checkbox" data-in="tteslim" data-i="${i}" ${l.teslim?'checked':''}> Tezgâhtan verildi</label>`:'<span class="grow"></span>'}${d==='kontrol'?`<button type="button" class="btn sm ok" data-act="tonay" data-i="${i}">${ic('tik')} Doğru</button>`:''}</div>`}</div>`;
+    ${tur==='satis'?`<div class="seg" role="group" aria-label="Teslim durumu"><button type="button" data-act="tteslim" data-i="${i}" data-v="0" aria-pressed="${!l.teslim}">Sonra teslim edilecek</button><button type="button" data-act="tteslim" data-i="${i}" data-v="1" aria-pressed="${!!l.teslim}">Şimdi verildi</button></div>`:''}
+    ${d==='kontrol'?`<button type="button" class="btn sm ok block" data-act="tonay" data-i="${i}">${ic('tik')} Okunan bilgi doğru</button>`:''}`}</div>`;
 }
 function taslakBar(t){const e=t.satirlar.filter(l=>satirDurum(l)==='eksik').length,k=t.satirlar.filter(l=>satirDurum(l)==='kontrol').length;
   return`<div class="grow small muted">${e||k?[e?e+' satır eksik':'',k?k+' satır kontrol bekliyor':''].filter(Boolean).join(', ')+'. Bunlar kayda girer ama tamamlanana kadar stoku etkilemez.':'Bütün satırlar hazır.'}</div>
@@ -259,6 +262,8 @@ function vYonetim(){
   return`<h2>Personel</h2>
   <div class="card"><div class="list">${S.personel.map(p=>`<div class="item"><div class="av">${esc((p.ad||'?').trim().charAt(0).toLocaleUpperCase('tr'))}</div><div class="grow"><div class="nm">${esc(p.ad)} <span class="chip">${ROL[p.rol]||p.rol}</span> ${p.aktif?'':'<span class="chip bad">pasif</span>'}</div><div class="small muted">${p.kullanici_adi?'Kullanıcı adı: '+esc(p.kullanici_adi):'E-posta ile giriş'}</div></div>
     ${p.id===S.ben.id?'':`<button type="button" class="btn sm" data-act="pduz" data-id="${p.id}">Düzenle</button>`}</div>`).join('')||iskelet(3)}</div></div>
+  <div class="card form"><h3>Satış ayarı</h3><label class="tog"><input type="checkbox" data-in="ayareksi" ${S.eksiIzin?'checked':''}> Stok yetmese de satışı kaydet</label>
+    <div class="small muted">${S.eksiIzin?'Açık: hiçbir satış onayınıza düşmez. Stokta görünenden fazlası satılırsa o ürünün stoku eksiye iner; Stok sekmesindeki "Eksiye düşen" filtresinden görürsünüz.':'Kapalı: stokta görünenden fazlası satılırsa satır "Stok yetersiz" olarak sizin onayınızı bekler.'}</div></div>
   <div class="card form"><h3>Yeni personel</h3>
     <label class="field">Ad<input id="p-ad" autocomplete="off"></label>
     <label class="field">Kullanıcı adı (küçük harf, boşluksuz)<input id="p-kadi" autocapitalize="none" autocomplete="off" spellcheck="false"></label>
@@ -311,7 +316,7 @@ function sheet(){
     h=`<div class="row"><h2 class="grow">Satırı tamamla</h2>${kapat}</div>${s.ham?`<div class="small muted">Belgede yazan: ${esc(s.ham)}</div>`:''}
     <button type="button" class="prod ${u?'':'bos'}" data-act="ssec"><span>${u?esc(u.ad)+' <span class="muted small">'+esc(u.kategori)+'</span>':'Ürün seçmek için dokunun'}</span><span class="small">Değiştir</span></button>
     <div class="row"><label class="small muted grow" for="s-m">Miktar</label><input class="inp num" id="s-m" inputmode="decimal" data-in="sm" value="${esc(s.m)}"><span class="small" style="min-width:42px">${bl(u)}</span></div>
-    ${s.tur==='satis'?`<label class="tog"><input type="checkbox" data-in="steslim" ${s.teslim?'checked':''}> Tezgâhtan verildi</label>${u?`<div class="small muted">Satılabilir stok: ${fmt(u.kullanilabilir)} ${bl(u)}</div>`:''}`:''}
+    ${s.tur==='satis'?`<div class="seg" role="group" aria-label="Teslim durumu"><button type="button" data-act="steslim" data-v="0" aria-pressed="${!s.teslim}">Sonra teslim edilecek</button><button type="button" data-act="steslim" data-v="1" aria-pressed="${!!s.teslim}">Şimdi verildi</button></div>${u?`<div class="small muted">Satılabilir stok: ${fmt(u.kullanilabilir)} ${bl(u)}</div>`:''}`:''}
     <button type="button" class="btn pri block" data-act="skaydet">Kaydet</button><button type="button" class="btn block" data-act="sdis">Bu satır stok dışı (nakliye, işçilik vb.)</button>`}
   else if(s.tip==='rez'){const r=S.rez.find(x=>x.id===s.id);if(!r){S.sheet=null;el.innerHTML='';return}const u=S.U.get(r.urun_id);
     h=`<div class="row"><div class="grow"><h2>${esc(u?u.ad:'Ürün')}</h2><div class="small muted">${esc(r.musteri||'Müşteri yazılmamış')} · satılan ${fmt(r.miktar)} ${bl(u)} · kalan ${fmt(r.kalan)}</div></div>${kapat}</div>
@@ -370,6 +375,8 @@ document.addEventListener('click',e=>{
   else if(a==='tekle'){t.satirlar.push(bosSatir());ciz()}
   else if(a==='tsil'){t.satirlar.splice(+b.dataset.i,1);ciz()}
   else if(a==='tonay'){t.satirlar[+b.dataset.i].onay=true;ciz()}
+  else if(a==='tteslim'){t.satirlar[+b.dataset.i].teslim=b.dataset.v==='1';ciz()}
+  else if(a==='steslim'){S.sheet.teslim=b.dataset.v==='1';sheet()}
   else if(a==='tsec'){const l=t.satirlar[+b.dataset.i];S.sec={q:'',ham:l.ham,adaylar:[...(l.urun_id?[l.urun_id]:[]),...(l.adaylar||[])],disOlur:true,sec:uid=>{urunAta(l,uid);l.onay=true;ciz()},dis:()=>{l.dis=true;l.urun_id=null;ciz()}};secici()}
   else if(a==='tkaydet'){taslakKaydet()}
   /* ürün seçici */
@@ -433,8 +440,7 @@ document.addEventListener('input',e=>{const t=e.target,k=t.dataset.in;if(!k)retu
 });
 document.addEventListener('change',e=>{const t=e.target;
   if(/^f-(satis|alis)-[kd]$/.test(t.id)){const f=t.files&&t.files[0];t.value='';if(f)fisBaslat(t.id.split('-')[1],f)}
-  else if(t.dataset.in==='tteslim'){S.taslak.satirlar[+t.dataset.i].teslim=t.checked}
-  else if(t.dataset.in==='steslim'){S.sheet.teslim=t.checked}
+  else if(t.dataset.in==='ayareksi'){const v=t.checked;is(async()=>{const r=await sb.from('ayar').upsert({anahtar:'eksi_satis_izin',deger:v},{onConflict:'anahtar'});if(r.error)throw r.error;S.eksiIzin=v;toast(v?'Stok yetmese de satış kaydedilecek.':'Stok yetmeyen satışlar onayınızı bekleyecek.')})}
   else if(t.dataset.in==='tm'&&S.taslak){setTimeout(()=>{const a=document.activeElement;if(!(a&&/^(INPUT|SELECT)$/.test(a.tagName))&&S.taslak&&!S.sec&&!S.sheet)ciz()},0)}
 });
 document.addEventListener('keydown',e=>{
